@@ -58,7 +58,7 @@ git rev-parse --show-toplevel 2>/dev/null | xargs basename 2>/dev/null
 
 Create `~/work-logs/` if it doesn't exist, then write `~/work-logs/{TODAY}.md`.
 
-**If the file already exists, Read it first** before Writing (required to avoid overwrite errors).
+**If the file already exists, Read it first** before Writing (required to avoid overwrite errors). Then **overwrite it entirely** — always regenerate from all available session data, do not append or merge with the previous content.
 
 Format — keep under 60 lines total:
 
