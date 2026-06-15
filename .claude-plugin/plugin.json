@@ -1,0 +1,12 @@
+{
+  "name": "eod",
+  "description": "End-of-day work log for Claude Code. Aggregates today's session memory, git history, and file changes into a dated markdown entry — one command at the end of your day.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Sabari Kumar",
+    "email": "ceo@getsetai.ai"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/sabarikr/claude-eod-skill",
+  "keywords": ["productivity", "work-log", "daily-log", "session", "documentation", "memory"]
+}
