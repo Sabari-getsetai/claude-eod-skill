@@ -29,6 +29,17 @@ Claude will:
 3. Synthesize everything into a structured daily log
 4. Save to `~/work-logs/YYYY-MM-DD.md`
 
+### Backfilling a missed day
+
+Forgot to run `/eod` yesterday? Pass a date:
+
+```
+/eod 2026-06-18
+/eod yesterday
+```
+
+Claude resolves the date and gathers that day's remember logs and git commits instead of today's.
+
 ## Output Format
 
 ```markdown
