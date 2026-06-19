@@ -40,6 +40,16 @@ Forgot to run `/eod` yesterday? Pass a date:
 
 Claude resolves the date and gathers that day's remember logs and git commits instead of today's.
 
+### Backfilling all missed days
+
+Not sure which days you skipped? Run:
+
+```
+/eod missing
+```
+
+Claude scans `~/work-logs/` against your remember logs and git history (last 90 days), finds every day that has activity but no log, and writes one log per missing day automatically.
+
 ## Output Format
 
 ```markdown

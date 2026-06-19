@@ -1,6 +1,6 @@
 ---
 name: eod
-description: End-of-day work log. Aggregates today's session memory (remember plugin), git history, and uncommitted changes into a clean dated markdown entry. Run at end of each workday with /eod. Pass a date (/eod 2026-06-18 or /eod yesterday) to backfill a missed day.
+description: End-of-day work log. Aggregates today's session memory (remember plugin), git history, and uncommitted changes into a clean dated markdown entry. Run at end of each workday with /eod. Pass a date (/eod 2026-06-18 or /eod yesterday) to backfill a missed day, or /eod missing to auto-detect and backfill every day with activity but no log.
 allowed-tools: Bash, Read, Write
 ---
 
@@ -8,13 +8,13 @@ Generate an end-of-day work log. Work through each step in order.
 
 ---
 
-## Step 1 — Establish the date
+## Step 1 — Establish the date(s)
 
-The user may invoke this skill with an optional date argument to backfill a day they forgot to run `/eod` for, e.g. `/eod 2026-06-18` or `/eod yesterday`. Check the invocation for an argument:
+The user may invoke this skill three ways. Check the invocation for an argument:
 
-- **No argument** → use today's actual date.
-- **Explicit date** (`2026-06-18`, `06-18`, `6/18/2026`, etc.) → resolve it to `YYYY-MM-DD`. Assume the current year if omitted.
-- **Relative word** (`yesterday`, `monday`, `last friday`, etc.) → resolve it against today's actual date.
+- **No argument** → target is today's actual date.
+- **Explicit date or relative word** (`2026-06-18`, `06-18`, `6/18/2026`, `yesterday`, `last friday`, etc.) → resolve it to `YYYY-MM-DD` against today's actual date. Assume the current year if omitted.
+- **`missing`** → don't resolve a single date. Instead go to **Step 1a** below to find every day that's missing a log, then run Steps 2–4 once per missing date.
 
 Run this to get today's actual date as a reference point:
 
@@ -22,7 +22,34 @@ Run this to get today's actual date as a reference point:
 date +%Y-%m-%d
 ```
 
-Resolve the target date and treat it as a **fixed literal** — call it `TARGET_DATE` — for the rest of this run. Do not silently re-derive "today" in later steps; every command below that needs the date must use this same literal value (shell variables don't persist between tool calls, so substitute the literal directly rather than relying on a `$TARGET_DATE` shell variable set in a previous command).
+For the single-date cases, resolve the target date and treat it as a **fixed literal** — call it `TARGET_DATE` — for the rest of this run. Do not silently re-derive "today" in later steps; every command below that needs the date must use this same literal value (shell variables don't persist between tool calls, so substitute the literal directly rather than relying on a `$TARGET_DATE` shell variable set in a previous command).
+
+---
+
+## Step 1a — Find missing dates (`/eod missing` only)
+
+Skip this step entirely unless the user passed `missing`.
+
+Find every date that shows activity — from remember-plugin logs (across all projects, no date filter this time) and from this project's git history (bounded to the last 90 days to keep this fast):
+
+```bash
+find ~ -maxdepth 7 -name "today-*.md" \
+  -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/\.*cache*/*" 2>/dev/null \
+  | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort -u
+
+git log --since="90 days ago" --format="%ad" --date=format:%Y-%m-%d 2>/dev/null | sort -u
+```
+
+Then list dates that already have a log:
+
+```bash
+ls ~/work-logs/ 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort -u
+```
+
+`MISSING_DATES` = (dates with activity) minus (dates already logged) minus today's actual date (today isn't finished yet — run plain `/eod` for it separately once the day is done).
+
+- If `MISSING_DATES` is empty, tell the user **"No missing work logs found."** and stop here — skip Steps 2–4.
+- Otherwise, for **each** date in `MISSING_DATES`, oldest first, treat it as `TARGET_DATE` and run Steps 2–4 in full for that date, writing one file per date before moving to the next. Note in your own output that this 90-day git lookback means activity older than that won't be detected.
 
 ---
 
@@ -115,6 +142,14 @@ After saving, output:
 ```
 Saved: ~/work-logs/{TARGET_DATE}.md
 Sessions: N | Projects: X | Key items: Y
+```
+
+For `/eod missing`, instead output one line per date written, then a totals line:
+
+```
+Saved: ~/work-logs/2026-06-10.md
+Saved: ~/work-logs/2026-06-12.md
+Backfilled 2 missing day(s) (git lookback: 90 days).
 ```
 
 Nothing else.
